@@ -12,7 +12,7 @@ with open('config.json', 'r') as file : config = json.load(file)
 class UserService:
     def __init__(self,logger):
         self.logger = logger
-
+        
     def add_user(self,telegram_id: int, username: str):
         session = next(get_db_session())
         try:

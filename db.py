@@ -1,13 +1,54 @@
 from sqlalchemy import create_engine, Column, String, Integer, Numeric, DateTime, ForeignKey, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy import desc
 from datetime import datetime
+import json 
 import uuid
+with open('config.json', 'r') as file : config = json.load(file)
 
 Base = declarative_base()
 
 def generate_uuid():
     return str(uuid.uuid4())
+
+
+def last_subscription(session,user):
+    last_subscription = (
+        session.query(Subscription)
+        .filter(Subscription.user_id == user.id)
+        .order_by(desc(Subscription.created_at))
+        .first()
+    )
+    return last_subscription
+def get_sub_list(session,count,user_id):
+    subscriptions = (
+        session.query(Subscription)
+        .filter(Subscription.user_id == str(user_id))
+        .order_by(desc(Subscription.created_at))
+        .limit(count)  # Ограничиваем результат 10 записями
+        .all()  # Получаем все записи
+    )
+    return subscriptions
+
+def create_user(telegram_id: str, username: str = None, balance: float = 0.0):
+    db = next(get_db_session())
+    try:
+        new_user = User(
+            telegram_id=telegram_id,
+            username=username,
+            balance=balance
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user
+    except Exception as e:
+        db.rollback()
+        raise e
+    finally:
+        db.close()
+
 
 #Пользователи
 class User(Base):
@@ -67,7 +108,7 @@ class VPNServer(Base):
     subscriptions = relationship("Subscription", back_populates="vpn_server")
 
 # Настройка подключения к базе данных
-DATABASE_URL = "postgresql://vpn_bot_user:yourpassword@localhost/vpn_bot_db"
+DATABASE_URL = f"postgresql://{config['username']}:{config['password_DB']}@localhost/bot_db"
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
