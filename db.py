@@ -13,43 +13,6 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 
-def last_subscription(session,user):
-    last_subscription = (
-        session.query(Subscription)
-        .filter(Subscription.user_id == user.id)
-        .order_by(desc(Subscription.created_at))
-        .first()
-    )
-    return last_subscription
-def get_sub_list(session,count,user_id):
-    subscriptions = (
-        session.query(Subscription)
-        .filter(Subscription.user_id == str(user_id))
-        .order_by(desc(Subscription.created_at))
-        .limit(count)  # Ограничиваем результат 10 записями
-        .all()  # Получаем все записи
-    )
-    return subscriptions
-
-def create_user(telegram_id: str, username: str = None, balance: float = 0.0):
-    db = next(get_db_session())
-    try:
-        new_user = User(
-            telegram_id=telegram_id,
-            username=username,
-            balance=balance
-        )
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
-        return new_user
-    except Exception as e:
-        db.rollback()
-        raise e
-    finally:
-        db.close()
-
-
 #Пользователи
 class User(Base):
     __tablename__ = 'users'

@@ -2,6 +2,7 @@ from db import User
 from db import Subscription
 from db import Transaction
 from db import VPNServer
+from sqlalchemy import desc
 from datetime import datetime,timedelta
 from db import get_db_session
 import json 
@@ -62,25 +63,29 @@ class UserService:
         finally:
             session.close()
 
-    def tariff_setting(self,telegram_id: int,plan: str):
+    def tariff_setting(self, user, plan: str, expiry_duration):
         session = next(get_db_session())
         try:
-            user = session.query(User).filter(User.telegram_id == telegram_id).first()
-            if user:
-                server = (
+            server = (
                 session.query(VPNServer)
                 .filter(VPNServer.current_users < VPNServer.max_users)
                 .order_by(VPNServer.current_users.asc())
-                .first())
-                current_plan = config['subscription_templates'].get(plan)
-                expiry_ = datetime.now() + timedelta(days=current_plan['expiry_duration'])
-                new_subscription = Subscription(user_id = user.id,vpn_server_id = server.id,plan = plan,expiry_date = expiry_)
-                session.add(new_subscription)
-                session.commit()
+                .first()
+            )
+            
+            if server is None:
+                self.logger.error("Нет доступных VPN серверов.")
+                return
+
+            expiry_ = datetime.now() + timedelta(days=expiry_duration)
+            new_subscription = Subscription(user_id=user.id, vpn_server_id=server.id, plan=plan, expiry_date=expiry_)
+            session.add(new_subscription)
+            session.commit()
         except Exception as e:
-            self.logger.error(f"Чё то ошибка в установке тарифа: {e}")
+            self.logger.error(f"Ошибка в установке тарифа: {e}")
         finally:
             session.close()
+
 
 
     def create_uri(self,telegram_id,):
