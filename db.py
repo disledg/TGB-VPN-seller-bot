@@ -54,6 +54,24 @@ class Transaction(Base):
 
     user = relationship("User", back_populates="transactions")
 
+class Requests(Base):
+    __tablename__ = 'requests'
+
+    id = Column(String,primary_key=True,default=generate_uuid)
+    user_id = Column(String,ForeignKey('users.id'))
+    username = Column(String)
+    created_at = Column(DateTime,default=datetime.now)
+    content = Column(String)
+    status = Column(String,default='open')
+    user = relationship("User",back_populates="requests")
+
+class Administrators(Base):
+    __tablename__ = 'admins'
+
+    id =  Column(String,primary_key=True,default=generate_uuid)
+    user_id = Column(String,ForeignKey('users.id'))
+    admin = Column(bool,default=False)
+    user = relationship("User",back_populates="admins")
 # VPN-серверы
 class VPNServer(Base):
     __tablename__ = 'vpn_servers'
