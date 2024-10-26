@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, String, Integer, Numeric, DateTime, ForeignKey, Text
+from sqlalchemy import create_engine, Column, String, Integer, Numeric, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy import desc
@@ -19,13 +19,15 @@ class User(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     telegram_id = Column(String, unique=True, nullable=False)
-    username = Column(String) # email 3x-ui
+    username = Column(String)  # email 3x-ui
     balance = Column(Numeric(10, 2), default=0.0)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     subscriptions = relationship("Subscription", back_populates="user")
     transactions = relationship("Transaction", back_populates="user")
+    requests = relationship("Requests", back_populates="user")
+    admins = relationship("Administrators", back_populates="user") 
 
 #Подписки
 class Subscription(Base):
@@ -57,20 +59,22 @@ class Transaction(Base):
 class Requests(Base):
     __tablename__ = 'requests'
 
-    id = Column(String,primary_key=True,default=generate_uuid)
-    user_id = Column(String,ForeignKey('users.id'))
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey('users.id'))
     username = Column(String)
-    created_at = Column(DateTime,default=datetime.now)
+    created_at = Column(DateTime, default=datetime.now)
     content = Column(String)
-    status = Column(String,default='open')
-    user = relationship("User",back_populates="requests")
+    status = Column(String, default='open')
+    
+    user = relationship("User", back_populates="requests")  
+
 
 class Administrators(Base):
     __tablename__ = 'admins'
 
     id =  Column(String,primary_key=True,default=generate_uuid)
     user_id = Column(String,ForeignKey('users.id'))
-    admin = Column(bool,default=False)
+    admin = Column(Boolean,default=False)
     user = relationship("User",back_populates="admins")
 # VPN-серверы
 class VPNServer(Base):
@@ -80,9 +84,10 @@ class VPNServer(Base):
     server_name = Column(String)
     ip_address = Column(String)
     port = Column(Integer)
-    login_data = Column(Text)   
-    inbound = Column(Text)  
-    config = Column(Text)  
+    login = Column(String)
+    password = Column(String)
+    config = Column(String)
+    secret = Column(String)
     current_users = Column(Integer, default=0) 
     max_users = Column(Integer, default=4) 
 
